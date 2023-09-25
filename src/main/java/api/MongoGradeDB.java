@@ -48,8 +48,6 @@ public class MongoGradeDB implements GradeDB {
         }
     }
 
-
-
     @Override
     public Grade logGrade(String course, int grade) throws JSONException {
         OkHttpClient client = new OkHttpClient().newBuilder()
@@ -190,6 +188,36 @@ public class MongoGradeDB implements GradeDB {
     //       Hint: Read apiDocuments/getMyTeam.md and refer to the above
     //             methods to help you write this code (copy-and-paste + edit as needed).
     public Team getMyTeam() {
-        return null;
+        OkHttpClient client = new OkHttpClient().newBuilder()
+                .build();
+        MediaType mediaType = MediaType.parse("application/json");
+        JSONObject requestBody = new JSONObject();
+        RequestBody body = RequestBody.create(mediaType, requestBody.toString());
+        Request request = new Request.Builder()
+                .url("https://grade-logging-api.chenpan.ca/team")
+                .method("GET", body)
+                .addHeader("Authorization", API_TOKEN)
+                .addHeader("Content-Type", "application/json")
+                .build();
+
+        try {
+            Response response = client.newCall(request).execute();
+            System.out.println(response);
+            JSONObject responseBody = new JSONObject(response.body().string());
+
+            if (responseBody.getInt("status_code") == 200) {
+                JSONObject team = responseBody.getJSONObject("team");
+                return Team.builder()
+                        .members(team.getString("members")) // TODO: get string array :(
+                        .name(team.getString("name"))
+                        .build();;
+            } else {
+                throw new RuntimeException(responseBody.getString("message"));
+            }
+        }
+        catch (IOException | JSONException e) {
+            throw new RuntimeException(e);
+//            return null;
+        }
     }
 }
